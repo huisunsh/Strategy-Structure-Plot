@@ -20,6 +20,9 @@ sendFromEmail <- 'hui.sun@kellogg.northwestern.edu'
 # NOTE where to find the APIs
 # Qualtrics API: under Qualtrics -> My Account (by clicking the avatar on the top right corner) -> Qualtrics IDs -> API
 # Survey -> Distributions -> Anonymous Link -> the last part of the link, usually starting with "SV_"
+
+# filter criterion. Filter out responses that came in before a certain time.
+startDateFilter <- as.Date('2020-5-16')
 ```
 
 
@@ -50,6 +53,7 @@ get_Qualtrics_data <- function() {
 ```{r import}
 dat <- get_Qualtrics_data()
 dat <- dat[dat$Status==0,]
+dat <- dat[dat$StartDate > startDateFilter]
 ```
 
 ```{r recode}
