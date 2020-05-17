@@ -10,11 +10,10 @@ Code for (1) generating individual strategy-structure plot by pulling data from 
 setwd('<current file path, do not contain this .R file name>')
 library(rsconnect)
 # INFORMATION BELOW CAN BE FOUND ON https://www.shinyapps.io/admin/#/tokens
- rsconnect::setAccountInfo(name='<your Rshiny name>',
+rsconnect::setAccountInfo(name='<your Rshiny name>',
                            token='<shinyio.app token>',
                            secret='<shinyio.app secret>')
 deployApp()
 ```
 
-If everything works alright, after running the line "deployApp()", R will open a tab in the browser. Make sure to remember the URL of that page, 
-as that will be the page that you want to show the students. Every time you change the Qualtrics survey ID, run the app deployment part again, the app will update itself. 
+If everything works alright, after running the line "deployApp()", R will open a tab in the browser. Make sure to copy the URL of that page, because that will be the page that you want to show the students. Every time you change the Qualtrics survey ID, run the app deployment part again, the app will update itself. 
