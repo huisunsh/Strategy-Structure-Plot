@@ -1,0 +1,155 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list=ls())
+```
+
+```{r API key}
+qualtricAPI <- "<your qualtrics API>"
+sendgridAPI <- "<your sendgrid API>"
+surveyID <- '<Qualtrics survey ID>'
+Sys.setenv(SENDGRID_API=sendgridAPI)
+# Note: send from information should be compatible with the setup on sendgrid
+sendFromName <- 'Hui Sun'
+sendFromEmail <- 'hui.sun@kellogg.northwestern.edu'
+
+# NOTE where to find the APIs
+# Qualtrics API: under Qualtrics -> My Account (by clicking the avatar on the top right corner) -> Qualtrics IDs -> API
+# Survey -> Distributions -> Anonymous Link -> the last part of the link, usually starting with "SV_"
+```
+
+
+```{r library}
+library(data.table)
+library(ggplot2)
+library(ggpubr)
+library(qualtRics)
+library(sendgridr)
+```
+
+```{r}
+get_Qualtrics_data <- function() {
+  # qualtrics API key
+  Sys.setenv(qualtrics_api_key=qualtricAPI)
+  Sys.setenv(qualtrics_base_url="https://northwestern.ca1.qualtrics.com")
+  readRenviron("~/.Renviron")
+  # survey ID
+  qualtrics_api_credentials(api_key=Sys.getenv("qualtrics_api_key"),
+                                       base_url=Sys.getenv("qualtrics_base_url"),
+                                       install = TRUE,
+                                       overwrite = TRUE
+  )%>% qualtRics::fetch_survey(surveyID = surveyID, force_request = TRUE, label=FALSE, convert=FALSE)
+}
+
+```
+
+```{r import}
+dat <- get_Qualtrics_data()
+dat <- dat[dat$Status==0,]
+```
+
+```{r recode}
+# rename column names
+setnames(dat,paste0('Q',8:32,sep=''),paste0('s',1:25,sep=''))
+
+# reverse coding
+dat$s12 <- 6-dat$s12
+dat$s13 <- 6-dat$s13
+dat$s24 <- 6-dat$s24
+
+# summarize
+dat$strategy <- rowMeans(dat[,paste0('s',c(1,2,3,9,17,18,19,21,22,23),sep='')],na.rm=T)
+dat$routine <- rowMeans(dat[, paste0('s', c(4,5,6,8,12,15,16,20), sep='')],na.rm=T)
+dat$architecture <- rowMeans(dat[,paste0('s',c(5,8,11,13,15),sep='')],na.rm=T)
+dat$culture <- rowMeans(dat[, paste0('s',c(5,6,7,9,14,16),sep='')],na.rm=T)
+dat$environment <- rowMeans(dat[,paste0('s',c(10,19,24,25),sep='')],na.rm=T)
+dat$structure <- rowMeans(dat[,c('routine','architecture','culture')],na.rm=T)
+
+# factorize
+dat$gender <- factor(dat$gender, levels=c(1:4),labels=c('Male','Female','Other','Prefer not to say'))
+dat$rank <- factor(dat$rank, levels=c(1:6), labels=c('CEO/President', 'Other C-level executive', 'Non-executive senior manager', 'Middle manager', 'Supervisor', 'Non-management role'))
+dat$industry <- factor(dat$industry, levels=c(1:10), labels=c('Defense', 'Education', 'Manufacturing/Industrial', 'Financial services', 'Healthcare', 'Consumer/Business services', 'Consumer/Business products', 'Utilities', 'Non-profit', 'Public/Goverment'))
+dat$ownership <- factor(dat$ownership, levels=c(1:4), labels=c('Government', 'Non-profit', 'Privately held', 'Publicly traded'))
+dat$tenure <- factor(dat$tenure, levels=c(1:4), labels=c('Less than two', 'Two to five', 'Five to ten', 'More than ten'))
+dat$mkt_power <- factor(dat$mkt_power, levels=c(1:3), labels=c('Low', 'Medium', 'High'))
+dat$dynamism <- factor(dat$dynamism, levels=c(1:3), labels=c('Low','Medium', 'High'))
+
+
+```
+
+```{r individual plot functionn}
+genPlot <- function(i, dat){
+  # plot1
+  p1 <- ggplot(dat[i,],aes(x=structure,y=strategy,label=Q1)) +
+  geom_point(shape=3, size=4) + 
+  geom_text(nudge_y=0.3)+
+  geom_abline(intercept=0,slope=1,color='red') + 
+  labs(x='Structure',y='Strategy') +
+  xlim(0,5) +
+  ylim(0,5) + 
+  coord_fixed(ratio=1) +
+  theme_minimal()
+  
+  # plot2a
+  rowdat <- t(dat[i, c('environment','culture','architecture',
+                   'routine','strategy')])
+  item <- rownames(rowdat)
+  cdat <- data.table(V1=item, V2=rowdat[,1])
+  name <- dat[i,'Q1']
+  p2a<-ggplot(cdat[1,], aes(x=V1,y=V2)) +
+    geom_point() + 
+    geom_hline(yintercept=2.5) + 
+    labs(x='', y='')+
+    ylim(0,5) + 
+    annotate('text',x=1.2,y=1,label='Stable') + 
+    annotate('text',x=1.2,y=4,label='Volatile') + 
+    theme_light() + 
+    theme(axis.text.x=element_blank(),axis.ticks.x=element_blank()) + 
+    coord_flip() 
+
+  #plot2b
+  p2b<-ggplot(cdat[-1,], aes(x=V1,y=V2)) +
+    geom_point() + 
+    geom_hline(yintercept=2.5) + 
+    labs(x='', y='')+
+    ylim(0,5) + 
+    annotate('text',x=4.5,y=1,label='Exploiter') + 
+    annotate('text',x=4.5,y=4,label='Explorer') + 
+    theme_light() + 
+    theme(axis.text=element_text(size=10)) + 
+    coord_flip()
+  
+  plots <- ggarrange(p1,
+            ggarrange(p2a,p2b,heights=c(0.2,0.8),ncol=1,nrow=2,align='v'),
+            ncol=2,nrow=1)
+  # export plots
+  id <- i
+  ggexport(plots, filename = paste('Plot-',id,'.pdf',sep=''))
+  #   pdf(paste('Plot-',id,'.pdf',sep=''), onefile=T, paper='A4r', width=11, height=8)
+}
+```
+
+
+```{r send individual plots}
+
+for (i in 1:nrow(dat)){
+  genPlot(i,dat)
+  id <- i
+  emailAddress <- tolower(dat$email[i]) # seems to incur error when there're capitalized letter
+  name <- dat$Q1[i]
+  filename = paste('Plot-',id,'.pdf',sep='')
+  sendgridr::mail() %>% 
+            sendgridr::from(sendFromEmail, sendFromName) %>% 
+            sendgridr::to(emailAddress, name) %>% 
+            sendgridr::subject("Your report is attached") %>% 
+            sendgridr::content("Please find the report from your survey attached.")  %>% 
+            ## attachments is optional
+            sendgridr::attachments(filename) %>% 
+            sendgridr::send()
+}
+```
+
