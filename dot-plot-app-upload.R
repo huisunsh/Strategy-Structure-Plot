@@ -28,7 +28,10 @@
 # under Qualtrics -> My Account (by clicking the avatar on the top right corner) -> Qualtrics IDs -> API
 qualtricAPI <- "<your qualtrics API>"
 # Survey -> Distributions -> Anonymous Link -> the last part of the link, usually starting with "SV_"
-surveyID <- 'SV_eqEFIhPMfOPRtCR'
+surveyID <- '<your survey ID>'
+
+# filter criterion
+startDateFilter <- as.Date('2020-5-16')
 
 ####--------------------------------#####
 library(data.table)
@@ -55,6 +58,7 @@ get_Qualtrics_data <- function() {
 runProcessing <- function(dat){
     dat <-  get_Qualtrics_data()
     dat <- dat[dat$Status==0,]
+    dat <- dat[dat$StartDate > startDateFilter]
     
     # rename column names
     setnames(dat,paste0('Q',8:32,sep=''),paste0('s',1:25,sep=''))
