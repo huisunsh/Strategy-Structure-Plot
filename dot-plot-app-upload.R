@@ -31,6 +31,7 @@ qualtricAPI <- "<your qualtrics API>"
 surveyID <- '<your survey ID>'
 
 # filter criterion
+# Note: default time zone is UTC
 startDateFilter <- as.Date('2020-5-16')
 
 ####--------------------------------#####
