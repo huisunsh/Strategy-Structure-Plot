@@ -3,7 +3,7 @@ Code for (1) generating individual strategy-structure plot by pulling data from 
 
 ## APP deployment for dot-plot-app-upload.R
 
-1. Change the name of the file to `app.R`.
+1. Change the name of the file `dot-plot-app-upload.R` to `app.R`.
 2. Run the code below in R console.
 
 ```
