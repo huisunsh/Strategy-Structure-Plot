@@ -22,6 +22,7 @@ sendFromEmail <- 'hui.sun@kellogg.northwestern.edu'
 # Survey -> Distributions -> Anonymous Link -> the last part of the link, usually starting with "SV_"
 
 # filter criterion. Filter out responses that came in before a certain time.
+# Note: default time zone is UTC
 startDateFilter <- as.Date('2020-5-16')
 ```
 
