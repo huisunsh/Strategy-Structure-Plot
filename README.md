@@ -1,5 +1,6 @@
-# Strategy-Structure-Plot
-Code for (1) generating individual strategy-structure plot by pulling data from Qualtrics responses; (2) generating interactive strategy-structure plot for a class.
+# Strategy-Structure Plot
+
+Strategy-Structure plot is a tool developed for Ned's MBA class for demonstrating the idea behind strategy-structure fit of organizations. The code has two primary functions: (1) It will pull individual survey responses from a correspondingn Qualtrics survey; (2) it will generaet interactive strategy-structure plot with  based on students' demographic filters for class demonstration.
 
 ## APP deployment for dot-plot-app-upload.R
 
